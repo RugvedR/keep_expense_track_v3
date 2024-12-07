@@ -40,6 +40,7 @@ note = """
 30.11.24
 25/- pohe
 473/- healthy things grocery
+500/- coconut
 80/- paneer and veggie
 
 1.12.24
@@ -50,6 +51,7 @@ Piyush home lunch, badmin 🔵
 790/- harmosa eats
 450/- maid
 6250/- rent
+300/- misc
 
 2.12.24
 199/- Netflix 

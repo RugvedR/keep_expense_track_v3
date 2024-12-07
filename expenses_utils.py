@@ -1,17 +1,14 @@
 import pandas as pd
 import re
 import os
+import json
 
-def parse_expenses(note):
-    """Parses the expense note into a DataFrame."""
-    expenses = []
-    current_date = None
-
-    # Split the note by lines
-    lines = note.strip().split("\n")
-    
-    # Define category keywords
-    categories = {
+# Load categories from a JSON file
+def load_categories(file_path="categories.json"):
+    if os.path.exists(file_path):
+        with open(file_path, 'r') as f:
+            return json.load(f)
+    return {
         'Rent': ['rent', 'maid', 'cook', 'electricity', 'bill'],
         'Food & Necessities': ['lunch', 'dinner', 'snack', 'breakfast', 'milk', 'peanut butter', 'groceries', 'rice', 'aata', 'paratha', 'pohe', 'paneer'],
         'Transportation': ['petrol', 'cab'],
@@ -22,6 +19,47 @@ def parse_expenses(note):
         'Miscellaneous': ['misc']
     }
 
+# Save updated categories back to the JSON file
+def save_categories(categories, file_path="categories.json"):
+    with open(file_path, 'w') as f:
+        json.dump(categories, f)
+
+def categorize_expense(description, categories):
+    """Categorizes an expense based on the description."""
+    # Check if description matches any existing categories
+    for cat, keywords in categories.items():
+        if any(keyword in description.lower() for keyword in keywords):
+            return cat
+    
+    # If no match found, prompt the user to choose a category
+    print(f"Expense Description: {description}")
+    print("Please select the category:")
+    for idx, cat in enumerate(categories.keys(), 1):
+        print(f"{idx}. {cat}")
+    
+    choice = int(input("Enter the number corresponding to the category: "))
+    
+    # Map the choice to the category
+    selected_category = list(categories.keys())[choice - 1]
+    
+    # Add the new category to the list of keywords for this category
+    categories[selected_category].append(description.lower())
+    
+    # Save the updated categories back to the JSON file
+    save_categories(categories)
+    
+    return selected_category
+
+def parse_expenses(note):
+    """Parses the expense note into a DataFrame."""
+    expenses = []
+    current_date = None
+
+    # Split the note by lines
+    lines = note.strip().split("\n")
+    
+    # Load categories from file
+    categories = load_categories()
 
     for line in lines:
         # Check for date format (dd.mm.yy)
@@ -32,12 +70,8 @@ def parse_expenses(note):
             match = re.match(r"(\d+)/- (.+)", line.strip())
             if match:
                 amount, description = match.groups()
-                # Determine category based on keywords in the description
-                category = 'miscellaneous'  # Default category
-                for cat, keywords in categories.items():
-                    if any(keyword in description.lower() for keyword in keywords):
-                        category = cat
-                        break
+                # Categorize the expense
+                category = categorize_expense(description.strip(), categories)
                 
                 expenses.append({
                     "date": current_date,
